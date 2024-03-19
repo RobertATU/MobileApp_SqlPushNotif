@@ -55,3 +55,20 @@ export const fetchItems = () => {
       });
       return promise;
 };
+export const deleteItem = (id) => {
+  const promise = new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        'DELETE FROM items WHERE id = ?;',
+        [id], // An array of data that can be inserted into the sql query
+        (xx, result) => { // xx is the transaction id which we don't use
+          resolve(result);
+        },
+        (xx, err) => {
+          reject(err);
+        }
+      );
+    });
+  });
+  return promise;
+};

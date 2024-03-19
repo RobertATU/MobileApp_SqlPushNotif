@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native'
-import { StyleSheet, Button, View, Alert, Platform,TextInput, Text } from 'react-native';
+import { StyleSheet, Button, View, Alert, Platform,TextInput, Text, ScrollView } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { init, insertItem, fetchItems } from './sql';
+import { init, insertItem, fetchItems,deleteItem } from './sql';
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 
 import {useState} from 'react'
@@ -86,16 +86,6 @@ export default function App() {
     };
   }, []);
 
-  /* 
-    db test functions:
-   const dbResult = await insertItem(  // creates a new record in the sql database
-      { title: 'My FIrst SQL record' }
-    )
-    console.log(dbResult)
-
-    const dbResult = await fetchItems() // returns an array of sql objects {id: title}
-    console.log(dbResult)
-  */
 
  
 
@@ -103,11 +93,11 @@ export default function App() {
   return (
     <NavigationContainer>
     <Stack.Navigator>
-      <Stack.Screen
+      {/* <Stack.Screen
         name="Home"
         component={HomeScreen}
         options={{ title: 'Welcome' }}
-      />
+      /> */}
 
 <Stack.Screen
         name="List"
@@ -130,7 +120,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+
   },
+  itemContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 5,
+    marginBottom: 20,
+  },
+  scrollViewContainer: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
 });
 const HomeScreen = ({ navigation }) => {
   return (
@@ -149,43 +153,67 @@ const HomeScreen = ({ navigation }) => {
   )
 }
 const ListScreen = ({ navigation }) => {
-  const [text, onChangeText] = useState([]);
+  const [items, setItems] = useState([]);
+  const [itemCount, setItemCount] = useState(0);
   async function listAllRDBirecord() {
     let result = await fetchItems()
   
     console.log(JSON.stringify(result))
-    onChangeText(result);
+    setItems(result);
+    setItemCount(result.length);
    
   }
+  useEffect(() => {
+    const newScreen = navigation.addListener('focus', () => {
+      listAllRDBirecord();
+    });
+
+    return newScreen;
+  }, [navigation]);
+  const handleDeleteItem = async (id) => {
+    await deleteItem(id);
+    listAllRDBirecord();
+  };
   return (
-    <View style={styles.container}>
- 
+    <View >
+         <Text >Total Items: {itemCount}</Text>
+         <ScrollView>
+         <View style={styles.container}>
+    <Button
+    title="Go to Push Screen"
+    onPress={() => navigation.navigate('Push')
+    }
+  />
+  
     <Button
       title="Get"
       onPress={listAllRDBirecord}
     />
     <View>
       <Text>Title:  </Text>
-      {text.map((text) =>(
-        <View>
-        <Text>{text.title}</Text>
-        <Button title='Delete'/>
+      {items.map((item) =>(
+        <View key={item.id} style={styles.itemContainer}>
+        <Text>{item.title + item.id}</Text>
+        <Button title="Delete" onPress={() => handleDeleteItem(item.id)} />
         </View>
         ))}
     </View>
     <StatusBar style="auto" />
   </View>
+  </ScrollView>
+  </View>
   )
+  
 }
-
 
 
 const PushScreen = ({ navigation }) => {
 const [text2, onChangeText2] = useState('Useless Text');
 const handleInsertAndNotify = async () => {
   scheduleNotificationHandlerInsert(text2);
-  sendPushNotificationHandlerInsert(text2);
+ // sendPushNotificationHandlerInsert(text2);
   await insertItem({ title: text2 });
+  navigation.navigate('List')
 };
 
 async function scheduleNotificationHandler() {
