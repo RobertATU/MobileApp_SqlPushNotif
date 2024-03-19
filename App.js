@@ -167,7 +167,10 @@ const ListScreen = ({ navigation }) => {
     <View>
       <Text>Title:  </Text>
       {text.map((text) =>(
+        <View>
         <Text>{text.title}</Text>
+        <Button title='Delete'/>
+        </View>
         ))}
     </View>
     <StatusBar style="auto" />
